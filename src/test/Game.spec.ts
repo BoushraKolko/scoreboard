@@ -2,6 +2,7 @@ import { mocked } from "jest-mock";
 import { Game } from "../Game";
 import { ScoreBoard } from "../ScoreBoard";
 import { Team } from "../Team";
+
 jest.mock("../ScoreBoard");
 describe("Game logic", () => {
   const mockedGames = [
@@ -20,13 +21,13 @@ describe("Game logic", () => {
       }),
       update: jest.fn((newScore) => {
         mockedGames[0].score = newScore;
+        mockedGames[0].updatedDate = Date.now();
       }),
     },
   ] as unknown as Array<Game>;
 
   beforeEach(() => {
     mocked(ScoreBoard.getGames).mockReturnValue(mockedGames);
-    mocked(ScoreBoard.setGames).mockImplementation(() => {});
     mocked(ScoreBoard.setGames).mockReset();
   });
   it("should start a game successfully", () => {
@@ -46,9 +47,11 @@ describe("Game logic", () => {
   });
 
   it("should finish a game successfully", () => {
-    mockedGames[0].finish();
+    const expectedFinishedGame = mockedGames[0];
+    const result = mockedGames[0].finish();
     expect(ScoreBoard.getGames).toBeCalled();
     expect(ScoreBoard.setGames).toBeCalled();
+    expect(result).not.toContain(expectedFinishedGame);
   });
 
   it("should update a game successfully", () => {
@@ -59,7 +62,7 @@ describe("Game logic", () => {
     >);
   });
 
-  it("should get the summary of games", () => {
+  it("should get the summary of games of different score sum", () => {
     mocked(ScoreBoard.getGames).mockReturnValue([
       {
         score: { team1: 0, team2: 0 },
@@ -86,6 +89,45 @@ describe("Game logic", () => {
       },
       {
         score: { team1: 0, team2: 0 },
+        homeTeam: { name: "team1" },
+        awayTeam: { name: "team2" },
+        startDate: 1639911696037,
+        updatedDate: 1639911696037,
+      },
+    ];
+
+    const result = Game.getSummary();
+    expect(ScoreBoard.getGames).toBeCalled();
+    expect(JSON.stringify(result)).toEqual(JSON.stringify(expectedSummary));
+  });
+
+  it("should get the summary of games of the same score sum", () => {
+    mocked(ScoreBoard.getGames).mockReturnValue([
+      {
+        score: { team1: 0, team2: 2 },
+        homeTeam: { name: "team1" },
+        awayTeam: { name: "team2" },
+        startDate: 1639911696037,
+        updatedDate: 1639911696037,
+      },
+      {
+        score: { team3: 2, team4: 0 },
+        homeTeam: { name: "team3" },
+        awayTeam: { name: "team4" },
+        startDate: 1639911697037,
+        updatedDate: 1639911697037,
+      },
+    ] as unknown as Array<Game>);
+    const expectedSummary = [
+      {
+        score: { team3: 2, team4: 0 },
+        homeTeam: { name: "team3" },
+        awayTeam: { name: "team4" },
+        startDate: 1639911697037,
+        updatedDate: 1639911697037,
+      },
+      {
+        score: { team1: 0, team2: 2 },
         homeTeam: { name: "team1" },
         awayTeam: { name: "team2" },
         startDate: 1639911696037,

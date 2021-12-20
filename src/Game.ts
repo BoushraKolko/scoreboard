@@ -32,7 +32,7 @@ export class Game {
   }
 
   public finish(): Array<Game> {
-    let games: Array<Game> = ScoreBoard.getGames();
+    const games: Array<Game> = ScoreBoard.getGames();
     games.splice(games.indexOf(this), 1);
     ScoreBoard.setGames(games);
     console.log(

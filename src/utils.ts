@@ -4,10 +4,9 @@ import { ScoreBoard } from "./ScoreBoard";
 export const YesArray = ["y", "yes", ""];
 export const QuitArray = ["q", "quit"];
 
-export const getGames = (): Array<string> => {
+export const getFormattedGames = (): Array<string> => {
   const data: Array<Game> = ScoreBoard.getGames();
-  const mappedData = formatGames(data);
-  return mappedData;
+  return formatGames(data);
 };
 
 export const sortGames = (games: Array<Game>): Array<Game> => {
@@ -38,8 +37,8 @@ export const printGames = (games: Array<string>): void => {
   });
 };
 
-export const printSummary = (formattedGames: Array<Game>): void => {
-  formattedGames.forEach((game, index) =>
+export const printSummary = (games: Array<Game>): void => {
+  games.forEach((game, index) =>
     console.log(
       `${index + 1} . ${game.homeTeam.name} ${
         game.score[game.homeTeam.name]

@@ -2,7 +2,7 @@ import { Team } from "./Team";
 import prompt from "prompt-sync";
 import { Game } from "./Game";
 import {
-  getGames,
+  getFormattedGames,
   printGames,
   printSummary,
   QuitArray,
@@ -64,6 +64,11 @@ export const main = (): void => {
         console.log("Thank you for using our product!");
         break;
       }
+
+      default: {
+        console.log("You didn't enter a valid option, please enter again...");
+        break;
+      }
     }
   }
 };
@@ -93,19 +98,19 @@ const startGame = (): void => {
 };
 
 const getChosenGame = (): Game | undefined => {
-  const games: Array<string> = getGames();
+  const games: Array<string> = getFormattedGames();
 
   if (games.length === 0) {
     console.log("No game has started yet!");
     return;
   }
   printGames(games);
-  const int = parseInt(readLine("Enter the game number: ")) - 1;
-  if (Number.isNaN(int) || int < 0 || int > games.length) {
+  const index = parseInt(readLine("Enter the game number: ")) - 1;
+  if (Number.isNaN(index) || index < 0 || index > games.length) {
     console.log("You didn't enter a valid number, exiting...");
     return;
   }
-  return ScoreBoard.getGames()[int];
+  return ScoreBoard.getGames()[index];
 };
 
 main();
