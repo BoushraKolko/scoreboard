@@ -2,9 +2,9 @@
     "name": "",
     "version": "1.0.0",
     "description": "",
-    "main": "bin/ScoreBoardService.ts",
+    "main": "src/index.ts",
     "scripts": {
-        "start": "tsc -p tsconfig.json && node dist/src/bin/index.js ",
+        "start": "tsc -p tsconfig.json && node dist/src/index.js ",
         "build": "tsc -p tsconfig.json",
         "test": "jest test/"
     },

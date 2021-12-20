@@ -1,66 +1,100 @@
-import fs from "fs";
 import { mocked } from "jest-mock";
-import { Game } from "../bin/Game";
-import { Team } from "../bin/Team";
-jest.mock("fs");
-
+import { Game } from "../Game";
+import { ScoreBoard } from "../ScoreBoard";
+import { Team } from "../Team";
+jest.mock("../ScoreBoard");
 describe("Game logic", () => {
-  const mockedoriginalGamesData = `[{"score":{"team1":0,"team2":0},"homeTeam":{"name":"team1"},"awayTeam":{"name":"team2"},"startDate":1639911696037,"updatedDate":1639911696037}]`;
-  let mockedGamesData = `[{"score":{"team1":0,"team2":0},"homeTeam":{"name":"team1"},"awayTeam":{"name":"team2"},"startDate":1639911696037,"updatedDate":1639911696037}]`;
+  const mockedGames = [
+    {
+      score: { team1: 0, team2: 0 },
+      homeTeam: { name: "team1" },
+      awayTeam: { name: "team2" },
+      startDate: 1639911696037,
+      updatedDate: 1639911696037,
+      finish: jest.fn(() => {
+        const games: Array<Game> = ScoreBoard.getGames();
+        games.splice(0, 1);
+        ScoreBoard.setGames(games);
+        console.log(`Game between team1 and team2 finished`);
+        return games;
+      }),
+      update: jest.fn((newScore) => {
+        mockedGames[0].score = newScore;
+      }),
+    },
+  ] as unknown as Array<Game>;
 
+  beforeEach(() => {
+    mocked(ScoreBoard.getGames).mockReturnValue(mockedGames);
+    mocked(ScoreBoard.setGames).mockImplementation(() => {});
+    mocked(ScoreBoard.setGames).mockReset();
+  });
   it("should start a game successfully", () => {
-    mocked(fs.readFileSync).mockReturnValue(mockedGamesData);
     const game = new Game(new Team("team3"), new Team("team4"));
-    const newGameData = `{"score":{"team3":0,"team4":0},"homeTeam":{"name":"team3"},
-    "awayTeam":{"name":"team4"},"startDate":${Date.now()},"updatedDate":${Date.now()}}`;
-    mocked(fs.writeFileSync).mockImplementationOnce(() => {
-      mockedGamesData = mockedGamesData
-        .substr(0, mockedGamesData.length - 1)
-        .concat(",", newGameData, "]");
-    });
     const result = game.start();
     expect(result).toMatch("Game started successfully");
+    expect(ScoreBoard.getGames).toBeCalled();
+    expect(ScoreBoard.setGames).toBeCalled();
   });
 
   it("should return that a game with these teams is already running", () => {
-    mocked(fs.readFileSync).mockReturnValue(mockedGamesData);
     const game = new Game(new Team("team1"), new Team("team2"));
     const result = game.start();
     expect(result).toMatch("A game with the same teams is already running");
+    expect(ScoreBoard.getGames).toBeCalled();
+    expect(ScoreBoard.setGames).not.toBeCalled();
   });
 
   it("should finish a game successfully", () => {
-    mocked(fs.readFileSync).mockReturnValue(mockedGamesData);
-    mocked(fs.writeFileSync).mockImplementationOnce(() => {
-      mockedGamesData = mockedoriginalGamesData;
-    });
-    const game = new Game(new Team("team3"), new Team("team4"));
-    const result = game.finish();
-    expect(JSON.stringify(result)).toMatch(mockedoriginalGamesData);
+    mockedGames[0].finish();
+    expect(ScoreBoard.getGames).toBeCalled();
+    expect(ScoreBoard.setGames).toBeCalled();
   });
 
   it("should update a game successfully", () => {
-    mocked(fs.readFileSync).mockReturnValue(mockedGamesData);
-    const game = new Game(new Team("team1"), new Team("team2"));
-    game.update({ team1: 1, team2: 0 } as Record<string, number>);
-    expect(mocked(fs.writeFileSync)).toBeCalled();
+    mockedGames[0].update({ team1: 1, team2: 0 } as Record<string, number>);
+    expect(mockedGames[0].score).toEqual({ team1: 1, team2: 0 } as Record<
+      string,
+      number
+    >);
   });
 
   it("should get the summary of games", () => {
-    const expectedSummary =
-      `[{"score":{"team3":0,"team4":0},"homeTeam":{"name":"team3"},"awayTeam":{"name":"team4"},"startDate":${Date.now()},"updatedDate":${Date.now()}},`.concat(
-        mockedGamesData.substring(1)
-      );
-    mockedGamesData = mockedGamesData
-      .substr(0, mockedGamesData.length - 1)
-      .concat(
-        ",",
-        `{"score":{"team3":0,"team4":0},"homeTeam":{"name":"team3"},
-    "awayTeam":{"name":"team4"},"startDate":${Date.now()},"updatedDate":${Date.now()}}`,
-        "]"
-      );
-    mocked(fs.readFileSync).mockReturnValue(mockedGamesData);
+    mocked(ScoreBoard.getGames).mockReturnValue([
+      {
+        score: { team1: 0, team2: 0 },
+        homeTeam: { name: "team1" },
+        awayTeam: { name: "team2" },
+        startDate: 1639911696037,
+        updatedDate: 1639911696037,
+      },
+      {
+        score: { team3: 2, team4: 0 },
+        homeTeam: { name: "team3" },
+        awayTeam: { name: "team4" },
+        startDate: 1639911697037,
+        updatedDate: 1639911697037,
+      },
+    ] as unknown as Array<Game>);
+    const expectedSummary = [
+      {
+        score: { team3: 2, team4: 0 },
+        homeTeam: { name: "team3" },
+        awayTeam: { name: "team4" },
+        startDate: 1639911697037,
+        updatedDate: 1639911697037,
+      },
+      {
+        score: { team1: 0, team2: 0 },
+        homeTeam: { name: "team1" },
+        awayTeam: { name: "team2" },
+        startDate: 1639911696037,
+        updatedDate: 1639911696037,
+      },
+    ];
+
     const result = Game.getSummary();
-    expect(JSON.stringify(result)).toEqual(expectedSummary);
+    expect(ScoreBoard.getGames).toBeCalled();
+    expect(JSON.stringify(result)).toEqual(JSON.stringify(expectedSummary));
   });
 });
