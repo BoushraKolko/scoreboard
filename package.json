@@ -35,5 +35,8 @@
         "testMatch": [
             "**/test/*.+(ts)"
         ]
+    },
+    "dependencies": {
+        "jest-mock": "^27.4.2"
     }
 }
